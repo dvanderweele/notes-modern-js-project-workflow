@@ -1,5 +1,7 @@
 # Notes on Modern JavaScript Project Workflow
-These notes are derived from the Code Realm YouTube channel's React / JS Project Lifecycle playlist; I have no affiliation with the channel. These notes are more focused on the vanilla JavaScript aspects of the workflow, but for the sake of completeness I suppose some of the React-related notes will be included. I'm not focused on recreating the React CSS Spinners project he did, but instead I'm just documenting the overall process.
+These notes are derived from the Code Realm YouTube Channel's React / JS Project Lifecycle playlist; I have no affiliation with the channel. These are just personal notes, and I am amenable to takedown requests. In any case, I highly recommend you pop over to YouTube and check out his channel. 
+
+These notes are more focused on the vanilla JavaScript aspects of the workflow, but for the sake of completeness I suppose some of the React-related notes will be included. I'm not focused on recreating the React CSS Spinners project he did, but instead I'm just documenting the overall process.
 
 [Link to Code Realm's YouTube Channel.](https://www.youtube.com/channel/UCUDLFXXKG6zSA1d746rbzLQ)
 
@@ -77,7 +79,54 @@ npm i -D eslint
 ```sh
 npx eslint --init
 ```
-3) Create a `src` directory in project root and make an `index.js` file inside of it. As an example of manual ESLint usage, the lint all JS files in the `src` directory:
+3) Create a `src` directory in project root and make an `index.js` file inside of it. As an example of manual ESLint usage, the first line lints all JS files in the `src` directory, and the second does the same but also does as many automated fixes as it can:
 ```sh
 npx eslint src/*.js
+npx eslint src/*.js --fix
 ```
+4) Install [prettier-eslint](https://github.com/prettier/prettier-eslint) as a development dependency along with prettier-eslint-cli:
+```sh
+npm i -D prettier-eslint prettier-eslint-cli
+```
+5) To print to standard output prettified JavaScript from all files in the `src` directory (even those in nested directories) via the CLI:
+```sh
+npx prettier-eslint 'src/**/*.js'
+```
+6) Same as above, but actually write the output to the JavaScript files instead of standard output:
+```sh
+npx prettier-eslint 'src/**/*.js' --write
+```
+7) Modify the scripts section of `package.json` so it has the following linting scripts:
+```json
+{
+  "scripts": {
+    "lint": "eslint '**/*.js'",
+    "lint:fix": "prettier-eslint '**/*.js' --write"
+  }
+}
+```
+8) Note that [I'm not the only one who has had issues with the syntax used in #7](https://github.com/prettier/prettier-eslint-cli/issues/208). If you're on linux, the following alternative syntax might fix it:
+```json
+{
+  "scripts": {
+    "lint": "eslint $PWD/'**/*.js'",
+    "lint:fix": "prettier-eslint $PWD/'**/*.js' --write"
+  }
+}
+```
+9) To manually use the scripts we just created:
+```sh
+npm run lint
+npm run lint:fix
+```
+10) Create a configuration for VS Code to format code automatically on save. Create a `.vscode` directory in project root, and inside it make a `settings.json` file. Inside include (and restart vs code after):
+```json
+{
+  "editor.formatOnSave": true,
+  "prettier.eslintIntegration": true
+}
+```
+11) Don't forget to make sure you have the ESLint and Prettier plugins for VS Code installed. Finally push your changes to GitHub!
+
+---
+## Husky and lint-staged
