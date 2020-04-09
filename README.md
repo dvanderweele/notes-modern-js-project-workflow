@@ -130,3 +130,91 @@ npm run lint:fix
 
 ---
 ## Husky and lint-staged
+
+This next step is kind of optional. If the scope of your project is small enough that you know you are the only one who will ever work on it, and you'll always be editing it with VS Code... the steps we've already taken with Prettier and ESLint will probably be enough.
+
+But if you're going to have multiple contributors to your repo, or if you're going to be editing it in VIM or some other editor from time to time... this section will automate the linting and formatting steps to occur on every git commit.
+
+1) First install [Husky](https://github.com/typicode/husky).
+```sh
+npm i -D husky
+```
+2) Next install [lint-staged](https://github.com/okonet/lint-staged). There are newer instructions on GitHub, but for simplicity I'm just going to follow Code Realm's instructions which seem compatible.
+```sh
+npm i -D lint-staged
+```
+3) Include the following configuration in `package.json`:
+```json
+{
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.js": [
+      "npm run lint:fix",
+      "git add"
+    ]
+  },
+}
+```
+4) Commit your changes and push to Github.
+
+---
+## Rollup
+
+Instead of WebPack or Parcel, we'll use [Rollup](https://rollupjs.org/guide/en/). It seems to be more popular with those authoring Libraries as opposed to web applications.
+
+1) Install dependencies:
+```sh
+npm i -D rollup rollup-plugin-node-resolve
+```
+2) In project root, create a rollup config file:
+```sh
+touch rollup.config.js
+```
+3) Here is a basic rollup config that will use `src/index.js` as entry point and build up three output bundles - cjs, esm, umd - and stick them in a `dist` directory:
+```js
+const prefix = 'dist/bundle.'
+
+export default {
+  input: 'src/index.js',
+  output: [
+    {
+      file: `${prefix}cjs.js`,
+      format: 'cjs'
+    },
+    {
+      file: `${prefix}esm.js`,
+      format: 'esm'
+    },
+    {
+      name: 'YourAwesomePackageNameHere',
+      file: `${prefix}umd.js`,
+      format: 'umd'
+    }
+  ]
+}
+```
+4) Install [rimraf](https://www.npmjs.com/package/rimraf) as a development dependency to clean out the dist directory every time rollup runs:
+```sh
+npm i -D rimraf
+```
+5) Add the scripts for `prebuild` and `build` to `package.json`:
+```json
+{
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "rollup -c"
+  }
+}
+```
+6) Now you can commit your changes and push to GitHub. Every time you run the following, your `dist` directory will be cleaned out and you'll get three new bundles from rollup:
+```sh
+npm run build
+```
+
+---
+## Babel... and Maybe React
+
