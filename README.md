@@ -323,6 +323,139 @@ const production = !process.env.ROLLUP_WATCH
   ]
 }
 ```
-11) Test your build process with `npm run build` if you like, then push your changes to GitHub.
+11) Test your build process with `npm run build` if you like. Now might be a good time to make sure that the `main` field in `package.json` points to the `dist/bundle.cjs.js` file, as that is the format NPM will be expecting. Right below the main field, you can put the following two fields to enable users of, say, Webpack to utilize the `esm` bundle and enable tree-shaking in their project. Note that `sideEffects` being false essentially means it is safe to tree-shake the project and scrap the code in your bundle they aren't using. The example that Code Realm uses is that maybe your package provides multiple components for your users, and as long as your components don't depend on one another, it's safe for your users to have Webpack tree-shake the code and scrap the components they aren't using.
+```json
+{
+  "main": "dist/bundle.cjs.js",
+  "module": "dist/bundle.esm.js",
+  "sideEffects": false
+}
+```
+12) Finally, push your changes to GitHub.
 
 ---
+## Component Pattern
+
+Just for documentation purposes, I'd like to note the component pattern that Code Realm used in the 7th video of his playlist. It's very easy to understand, but I've never actually bothered to implement this pattern myself so should I ever want to I'll have an easy reference right here. He does it of course with React/JSX and some CSS stuff, but I'm just going to try to notate a Vanilla JavaScript version.
+
+Say the `src/` folder has the following layout:
+
+```sh
+src/
+    index.js
+    component1/
+        component1.js
+        index.js
+    component2/
+        component2.js
+        index.js
+```
+
+The `src/index.js` might look like the following:
+
+```js
+export * from './component1
+
+export * from './component2
+```
+
+Each component subfolder itself has two files. The `component1/index.js` might look like the following:
+
+```js
+export { default as component1 } from './component1'
+```
+
+So what might `component1/component1.js` look like?
+
+```js
+const component1 = (msg) => {
+  return {
+    result: `Your input: ${msg}`,
+    retrieve: () => {
+      console.log(this.result)
+    }
+  }
+}
+
+export default component1
+```
+
+Nothing groundbreaking lol. But you get the idea.
+
+---
+## Notes on Example Projects
+
+In project root, you can create an `examples` folder that contains example projects that use your bundles. Importantly, in the `package.json` file of each example project folder, you'll want to set `private` to `true` so the example projects stay on GitHub and don't end up on NPM. Also make sure to provide a helpful `README.md` file for each example project.
+
+Although I've never tried it, I've read that installing your own project as a dependency in your example project can be done in several ways. The way that Code Realm does involves using `yarn add ../..` or `npm i ../..` in his example project roots. One potential alternative is using the `npm link` functionality. Simply run `npm link` in your module project's root folder on your development machine. Then, on the same machine but in the nested project directory, run `npm link <your-project-name>`, obviously with your module's name inserted at the end.
+
+To create a `cdn/umd` bundle example before you actually distribute the project to NPM, you can simply `npm i ../..` or similar in your `cdn-example` root directory, and then you'd reference in a relative path such as the following in a script tag in an `index.html` file:
+
+```html
+<script src="./node_modules/my-awesome-module/dist/bundle.umd.js"></script>
+<script>
+// usage of your module here
+</script>
+```
+
+---
+## Testing with Jest
+
+[Obligatory link to the Jest docs](https://jestjs.io/docs/en/getting-started.html).
+
+1) Install `jest` as a development dependency along with `babel-jest` compatibility package:
+```sh
+npm i -D jest babel-jest
+```
+2) To check for and run any tests from the command line:
+```sh
+npx jest
+```
+3) There are multiple ways to indicate in your project structure that there are test files for Jest. The convention I'll use is creating a new file in every directory with files that have module functionality and adding a `-.test.js` filename suffix. Example:
+```sh
+component1.js
+component1.test.js
+```
+4) To get eslint to stop complaining about the syntax in test files, install `eslint-plugin-jest`. The following is how you then might modify the `.eslintrc.json` file:
+```json
+{
+  "extends": [
+    "standard", "plugin:jest/recommended"
+  ]
+}
+```
+5) If you now try to run the tests it might fail. One thing you may need to do as add another entry called "env" to the json config object in `.babelrc`:
+```json
+{
+  "presets": [...],
+  "env": {
+    "test": {
+      "presets": ["@babel/env", "@babel/react"]
+    }
+  }
+}
+```
+6) With the testing example Code Realm used, when he ran `npx jest`, it would output a snapshot file. In future runs of the command, it would compare the new output and fail the test. To get by this, in the future you can run `npx jest -u` to update the snapshot. This is mostly for writing UI components I think. Admittedly, at the time of this writing I have ZERO experience personally with Jest, so these are just my personal notes based on the tutorial I was watching.
+
+¯\\\_(ツ)_/¯
+
+7) You can add the following four test-related scripts to your `package.json`. To manually generate a coverage report based on those tests, you can run `npm test -- --coverage`:
+```json
+{
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "test:coverage": "jest --coverage",
+  "test:staged": "jest --findRelatedTests"
+}
+```
+8) You might want to add the new `coverage` file to the `.gitignore`, `.eslintignore`, and `.prettierignore` files. Also, you can add the script `npm run test:staged` to the  middle of the`lint-staged` part of your `package.json`:
+```json
+{
+"lint-staged": {
+  "*.js": [
+    "npm run lint:fix",
+    "npm run test:staged",
+    "git add"
+  ]
+}
+```
