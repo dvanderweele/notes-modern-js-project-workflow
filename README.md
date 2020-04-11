@@ -218,3 +218,111 @@ npm run build
 ---
 ## Babel... and Maybe React
 
+So in [this video](https://www.youtube.com/watch?v=4joAZ2RQNys) Code Realm goes through explaining how to install React support via Babel. I am interested in Babel, but only for plain ES6+ features, not React.
+
+I have nothing against React, but the whole point of this workflow for me is learning a modern vanilla JavaScript process. There are already tools like Create-React-App, and even [Create-React-Library](https://github.com/transitive-bullshit/create-react-library).
+
+So I'm going to omit the React stuff, but feel free to go that route if you like.
+
+1) Install Babel support:
+```sh
+npm i -D rollup-plugin-babel @babel/core @babel/preset-env
+```
+2) Create a `.babelrc` file in project root. Here's the config that Code Realm uses (Obviously, don't add `node` if you aren't targeting that environment. [Check out the docs](https://babeljs.io/docs/en/babel-preset-env#targets) to customize this part.):
+```json
+{
+  "presets": [
+    [
+      "@babel/env",
+      {
+        "modules": false,
+        "targets": {
+          "browsers": "> 0.25%, ie 11, not op_mini all, not dead",
+          "node": 10
+        }
+      }
+    ]
+  ]
+}
+```
+3) Add the following two `import` statements to the top of the `rollup.config.js` file
+```js
+import babel from 'rollup-plugin-babel'
+import resolve from 'rollup-plugin-node-resolve'
+```
+4) Also add the following `plugins` section to the default exported object in `rollup.config.js`:
+```js
+{
+  plugins: [
+    resolve(),
+    babel({
+      exclude: 'node_modules/**'
+    })
+  ]
+}
+```
+5) If there are any **external** **dependencies** for your project, list their names as strings in an array called `external` in `rollup.config.js`. For this example, I'm including lodash. The point of this is so that your package indicates to consumers that the peer dependency, in this case lodash, is not itself bundled with the package but must be installed by the consumer:
+```js
+{
+  external: ['lodash']
+}
+```
+6) For instances where you are generating a `umd` bundle like we are in this example, you need to specify any global keywords for the `umd` bundle in `rollup.config.js`, such as if you are using `React` or `jquery`:
+```js
+const prefix = 'dist/bundle.'
+
+export default {
+  input: 'src/index.js',
+  output: [
+    {
+      file: `${prefix}cjs.js`,
+      format: 'cjs'
+    },
+    {
+      file: `${prefix}esm.js`,
+      format: 'esm'
+    },
+    {
+      name: 'YourAwesomePackageNameHere',
+      globals: {
+        jquery: '$',
+        react: 'React',
+        'react-dom': 'ReactDOM'
+      },
+      file: `${prefix}umd.js`,
+      format: 'umd'
+    }
+  ]
+}
+```
+7) At this point we can in project root create two files, `.prettierignore` and `.eslintignore`. Put the following in both of them to stop the plugins from messing with node modules and dist bundles. Also add the `dist` directory to `.gitignore` if you haven't already:
+```
+dist
+
+node_modules
+```
+8) Code Realm at this point has us install the `Terser` plugin to help us minify our code.
+```sh
+npm i -D rollup-plugin-terser
+```
+9) Import the plugin into the `rollup.config.js` file, as well as create a constant right below it (not within default exported config object) that determines whether rollup is in production mode or not:
+```js
+import { terser } from 'rollup-plugin-terser'
+
+const production = !process.env.ROLLUP_WATCH
+```
+10) Now add the terser plugin to the plugins array, making sure it only runs when in production mode:
+```js
+{
+  plugins: [
+    resolve(),
+    babel({
+      exclude: 'node_modules/**'
+    }),
+    production && terser()
+  ]
+}
+```
+11) Test your build process with `npm run build` if you like, then push your changes to GitHub.
+
+---
