@@ -552,7 +552,7 @@ DISCLAIMER: once again, although I've read about and heard of these services bef
 1. Install the `node-coveralls` package as a preliminary development dependency. We'll get back to this later.
 
 ```sh
-npm i -D node-coveralls
+npm i -D coveralls
 ```
 
 2. After activating your project repository in TravisCI's interface, create a `.travis.yml` file in your project root and put the following contents in it. Note that the `node` value under the `node_js` key indicates to TravisCI that you want them to install the latest version of node. If you want to install a specific version you can also indicate that.
