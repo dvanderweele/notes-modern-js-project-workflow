@@ -312,7 +312,7 @@ import resolve from "rollup-plugin-node-resolve";
     babel({
       exclude: "node_modules/**",
     }),
-  ];
+  ],
 }
 ```
 
